@@ -1,79 +1,26 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <title>WA Web Clone</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #e5ddd5;
-            margin: 0;
-            padding: 20px;
-        }
-
-        #chat-box {
-            background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            height: 400px;
-            max-width: 500px;
-            margin: 0 auto;
-            overflow-y: scroll;
-            padding: 20px;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .msg {
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            max-width: 70%;
-            clear: both;
-        }
-
-        .msg.me {
-            background: #dcf8c6;
-            float: right;
-        }
-
-        .msg.other {
-            background: #fff;
-            float: left;
-        }
-
-        #input-box {
-            max-width: 500px;
-            margin: 0 auto;
-            background: #f0f0f0;
-            padding: 10px;
-            display: flex;
-            border-radius: 0 0 10px 10px;
-            box-sizing: border-box;
-        }
-
-        #msg-input {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 20px;
-            outline: none;
-        }
-
-        #send-btn {
-            background: #008f68;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin-left: 10px;
-            border-radius: 20px;
-            cursor: pointer;
-        }
+        body { font-family: Arial, sans-serif; background: #e5ddd5; margin: 0; padding: 20px; }
+        #chat-box { background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); height: 400px; max-width: 500px; margin: 0 auto; overflow-y: scroll; padding: 20px; border-radius: 10px 10px 0 0; }
+        .msg { padding: 10px; border-radius: 10px; margin-bottom: 10px; max-width: 70%; clear: both; }
+        .msg.me { background: #dcf8c6; float: right; }
+        .msg.other { background: #fff; float: left; }
+        .username { font-weight: bold; font-size: 0.8em; color: #075e54; margin-bottom: 5px; }
+        #input-box { max-width: 500px; margin: 0 auto; background: #f0f0f0; padding: 10px; display: flex; border-radius: 0 0 10px 10px; box-sizing: border-box; gap: 10px; }
+        #user-input { width: 100px; padding: 10px; border: none; border-radius: 20px; outline: none; }
+        #msg-input { flex: 1; padding: 10px; border: none; border-radius: 20px; outline: none; }
+        #send-btn { background: #008f68; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
     </style>
 </head>
-
 <body>
 
     <div id="chat-box"></div>
     <div id="input-box">
+        <input type="text" id="user-input" placeholder="Nama">
         <input type="text" id="msg-input" placeholder="Ketik pesan...">
         <button id="send-btn">Kirim</button>
     </div>
@@ -81,35 +28,40 @@
     <script>
         const conn = new WebSocket('ws://localhost:8080');
         const chatBox = document.getElementById('chat-box');
+            const userInput = document.getElementById('user-input');
         const msgInput = document.getElementById('msg-input');
         const sendBtn = document.getElementById('send-btn');
 
-        conn.onopen = function (e) {
+            conn.onopen = function (e) {
             console.log("Terhubung ke server!");
         };
 
-        conn.onmessage = function (e) {
-            appendMessage(e.data, 'other');
+            conn.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                appendMessage(data.user, data.msg, 'other');
         };
 
-        sendBtn.addEventListener('click', function () {
+            sendBtn.addEventListener('click', function () {
+                const user = userInput.value || 'Anonim';
             const msg = msgInput.value;
+
             if (msg) {
-                conn.send(msg);
-                appendMessage(msg, 'me');
+                const payload = { user: user, msg: msg };
+                conn.send(JSON.stringify(payload));
+
+                appendMessage(user, msg, 'me');
                 msgInput.value = '';
             }
         });
 
-        function appendMessage(text, type) {
+            function appendMessage(user, text, type) {
             const div = document.createElement('div');
             div.className = `msg ${type}`;
-            div.textContent = text;
+            div.innerHTML = `<div class="username">${user}</div><div>${text}</div>`;
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>
 
 </body>
-
 </html>
